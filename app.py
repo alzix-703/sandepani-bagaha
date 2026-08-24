@@ -1,7 +1,6 @@
 import os
 import sqlite3
 import random
-import string
 import requests
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from werkzeug.utils import secure_filename
@@ -12,13 +11,11 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 DISPOSABLE_EMAILS = ['bugmenot.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com', 'yopmail.com']
-
-# Aap yahan Fast2SMS se API key lekar dalna (Optional real SMS send karne ke liye)
 FAST2SMS_API_KEY = "1LgRSEw0MO9V4BGnopJrlF8j6mfcvA2hueYPqkIyWiZzXHNKTbP8qhR9CuSgr1s2Bt7MI4pecXzbmF0k"
 
 def send_real_sms(phone_number, otp_code):
     """Real phone SMS send karne ke liye function"""
-    if FAST2SMS_API_KEY != "YOUR_FAST2SMS_API_KEY_HERE":
+    if FAST2SMS_API_KEY:
         url = "https://www.fast2sms.com/dev/bulkV2"
         payload = f"variables_values={otp_code}&route=otp&numbers={phone_number}"
         headers = {
@@ -74,6 +71,7 @@ def init_db():
 init_db()
 
 def generate_captcha():
+    import string
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
 
 @app.route('/')
@@ -116,6 +114,14 @@ def signup():
         email = request.form.get('email')
         password = request.form.get('password')
         
+        conn = get_db_connection()
+        existing_user = conn.execute('SELECT * FROM users WHERE phone = ?', (phone,)).fetchone()
+        conn.close()
+        
+        if existing_user:
+            flash('Ye mobile number pehle se registered hai! Please login your first account.')
+            return render_template('signup.html')
+            
         domain = email.split('@')[-1] if '@' in email else ''
         if domain in DISPOSABLE_EMAILS:
             flash('Fake/Temporary Email allowed nahi hai!')
@@ -129,10 +135,9 @@ def signup():
             'otp': otp
         }
         
-        # Real Phone SMS Call
         send_real_sms(phone, otp)
         
-        flash(f'Verification OTP sent to {phone}! (Demo OTP: {otp})')
+        flash(f'Verification OTP successfully sent to your mobile number {phone}!')
         return redirect(url_for('verify_otp'))
         
     return render_template('signup.html')
@@ -147,7 +152,7 @@ def verify_otp():
             session['signup_success'] = True
             return redirect(url_for('profile_setup'))
         else:
-            flash('Galt OTP! Sahi OTP dalo.')
+            flash('Galt OTP! Sahi OTP dalo jo aapke phone par aaya hai.')
             
     return render_template('verify_otp.html')
 
@@ -158,6 +163,9 @@ def profile_setup():
         
     if request.method == 'POST':
         temp_user = session.get('temp_user')
+        if not temp_user:
+            return redirect(url_for('signup'))
+            
         name = request.form.get('name')
         username = request.form.get('username')
         address = request.form.get('address')
