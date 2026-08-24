@@ -3,26 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify OTP</title>
+    <title>Verify OTP - Sandepani School</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 100%; max-width: 350px; text-align: center; }
-        input { width: 100%; padding: 10px; margin: 15px 0; border-radius: 6px; border: 1px solid #333; background: #2c2c2c; color: #fff; text-align: center; font-size: 18px; letter-spacing: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #03dac6; color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
-        .flash { color: #03dac6; font-size: 14px; margin-bottom: 10px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+        body { background: #0f172a; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .card { background: #1e293b; padding: 30px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; text-align: center; }
+        h2 { margin-bottom: 20px; color: #38bdf8; }
+        .form-group { margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 18px; text-align: center; letter-spacing: 4px; outline: none; }
+        input:focus { border-color: #38bdf8; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: #0d9488; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn:hover { background: #0f766e; }
+        .flash { color: #ef4444; font-size: 14px; margin-bottom: 15px; }
+        p.info { color: #94a3b8; font-size: 14px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>Enter OTP</h2>
+        <p class="info">Enter the 6-digit OTP sent to your phone number.</p>
         {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for msg in messages %}<div class="flash">{{ msg }}</div>{% endfor %}
-            {% endif %}
+          {% if messages %}
+            {% for message in messages %}
+              {% if 'Demo OTP' not in message %}
+                <div class="flash">{{ message }}</div>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
         {% endwith %}
         <form action="/verify-otp" method="POST">
-            <input type="text" name="otp" placeholder="6-Digit OTP" maxlength="6" required>
-            <button type="submit">Verify & Continue</button>
+            <div class="form-group">
+                <input type="text" name="otp" placeholder="6-Digit OTP" maxlength="6" required>
+            </div>
+            <button type="submit" class="btn">Verify & Continue</button>
         </form>
     </div>
 </body>
