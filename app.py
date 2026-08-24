@@ -14,18 +14,13 @@ DISPOSABLE_EMAILS = ['bugmenot.com', 'tempmail.com', '10minutemail.com', 'guerri
 FAST2SMS_API_KEY = "1LgRSEw0MO9V4BGnopJrlF8j6mfcvA2hueYPqkIyWiZzXHNKTbP8qhR9CuSgr1s2Bt7MI4pecXzbmF0k"
 
 def send_real_sms(phone_number, otp_code):
-    """Real phone SMS send karne ke liye function"""
-    if FAST2SMS_API_KEY:
-        url = "https://www.fast2sms.com/dev/bulkV2"
-        payload = f"variables_values={otp_code}&route=otp&numbers={phone_number}"
-        headers = {
-            'authorization': FAST2SMS_API_KEY,
-            'Content-Type': "application/x-www-form-urlencoded"
-        }
-        try:
-            requests.post(url, data=payload, headers=headers)
-        except Exception as e:
-            print(f"SMS Error: {e}")
+    """Direct Fast2SMS GET API Call"""
+    try:
+        url = f"https://www.fast2sms.com/dev/bulkV2?authorization={FAST2SMS_API_KEY}&route=otp&variables_values={otp_code}&numbers={phone_number}"
+        res = requests.get(url)
+        print("SMS Response:", res.text)
+    except Exception as e:
+        print(f"SMS Error: {e}")
 
 def get_db_connection():
     conn = sqlite3.connect('database.db')
@@ -137,7 +132,7 @@ def signup():
         
         send_real_sms(phone, otp)
         
-        flash('Verification OTP sent to your phone!')
+        flash('Verification OTP sent to your registered mobile number!')
         return redirect(url_for('verify_otp'))
         
     return render_template('signup.html')
@@ -152,7 +147,7 @@ def verify_otp():
             session['signup_success'] = True
             return redirect(url_for('profile_setup'))
         else:
-            flash('Galt OTP! Sahi OTP dalo.')
+            flash('Galt OTP! Mobile SMS me aaya sahi OTP enter karein.')
             
     return render_template('verify_otp.html')
 
