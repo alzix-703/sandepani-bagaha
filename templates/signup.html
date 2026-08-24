@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Sandepani Portal</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 100%; max-width: 350px; }
+        h2 { text-align: center; color: #bb86fc; }
+        input { width: 100%; padding: 10px; margin: 8px 0; border-radius: 6px; border: 1px solid #333; background: #2c2c2c; color: #fff; box-sizing: border-box; }
+        .pass-box { position: relative; }
+        .eye-btn { position: absolute; right: 10px; top: 12px; cursor: pointer; }
+        button { width: 100%; padding: 12px; background: #bb86fc; color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+        .flash { color: #ff5252; text-align: center; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Create Account</h2>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for msg in messages %}<div class="flash">{{ msg }}</div>{% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form action="/signup" method="POST">
+            <input type="tel" name="phone" placeholder="Phone Number" required>
+            <input type="email" name="email" placeholder="Real Email Address" required>
+            <div class="pass-box">
+                <input type="password" name="password" id="signPass" placeholder="Password" required>
+                <span class="eye-btn" onclick="togglePass('signPass')">👁️</span>
+            </div>
+            <button type="submit">Get OTP Verification</button>
+        </form>
+    </div>
+    <script>
+        function togglePass(id) {
+            let el = document.getElementById(id);
+            el.type = el.type === "password" ? "text" : "password";
+        }
+    </script>
+</body>
+</html>

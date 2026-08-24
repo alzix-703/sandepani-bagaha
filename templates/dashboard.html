@@ -3,101 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - School Portal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-</head>
-<body class="bg-gray-900 text-white min-h-screen p-4">
-    <!-- Top Navbar -->
-    <div class="flex justify-between items-center bg-gray-800 p-4 rounded-xl shadow-lg mb-6 border border-gray-700">
-        <div class="flex items-center gap-3">
-            <img src="/uploads/{{ user.pic }}" class="w-12 h-12 rounded-full border-2 border-blue-500 object-cover">
-            <div>
-                <h1 class="font-bold text-lg flex items-center gap-1">
-                    {{ user.name }}
-                    {% if user.badge == 'red_tick' %}
-                        <span class="text-red-500 text-sm">🔴 (PM)</span>
-                    {% elif user.badge == 'blue_tick' %}
-                        <span class="text-blue-400 text-sm">🔵 (Leader)</span>
-                    {% endif %}
-                </h1>
-                <p class="text-xs text-gray-400">Role: {{ user.role }}</p>
-            </div>
-        </div>
-        <a href="/logout" class="bg-red-600 hover:bg-red-700 text-xs px-4 py-2 rounded-lg font-bold">Logout</a>
-    </div>
-
-    <!-- Student Complaint Cards Section -->
-    {% if user.role == 'student' %}
-    <h2 class="text-xl font-bold mb-4 text-blue-400">Select Leader to File Complaint</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+    <title>Dashboard - Sandepani Portal</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f12; color: #fff; padding-bottom: 50px; }
         
-        <!-- Pradhan Mantri Red Card -->
-        <div class="bg-gradient-to-r from-red-900 to-red-600 p-5 rounded-2xl shadow-xl animate__animated animate__pulse animate__infinite animate__slower border-2 border-red-500">
-            <h3 class="text-xl font-bold flex items-center gap-2">🔴 Pradhan Mantri <span class="bg-white text-red-600 text-xs px-2 py-0.5 rounded-full font-black">RED TICK</span></h3>
-            <p class="text-xs text-red-100 my-2">Agar aapki complaint koi leader nahi sun raha hai, toh yahan direct contact karein!</p>
-            <form action="/submit_complaint" method="POST" class="mt-3">
-                <input type="hidden" name="leader_role" value="PM">
-                <textarea name="description" placeholder="Write your complaint to PM here..." required class="w-full p-2 bg-gray-900 rounded-lg text-sm text-white mb-2 outline-none"></textarea>
-                <button type="submit" class="w-full bg-white text-red-700 font-bold py-2 rounded-lg text-sm hover:bg-gray-100 transition">Send to PM</button>
-            </form>
-        </div>
+        /* Navbar */
+        .navbar { display: flex; justify-content: space-between; align-items: center; background: #1a1a24; padding: 15px 20px; border-bottom: 1px solid #2a2a38; position: sticky; top: 0; z-index: 100; }
+        .menu-btn { font-size: 24px; cursor: pointer; color: #bb86fc; }
+        .logo { font-weight: bold; font-size: 18px; color: #bb86fc; }
+        .user-dp-small { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
 
-        <!-- Khel Mantri Card -->
-        <div class="bg-gradient-to-r from-blue-900 to-blue-600 p-5 rounded-2xl shadow-xl animate__animated animate__fadeInUp border border-blue-400">
-            <h3 class="text-xl font-bold flex items-center gap-2">🔵 Khel Mantri</h3>
-            <p class="text-xs text-blue-100 my-2">Sports kit, playground, ya games relative problem yahan batayein.</p>
-            <form action="/submit_complaint" method="POST" class="mt-3">
-                <input type="hidden" name="leader_role" value="Khel Mantri">
-                <textarea name="description" placeholder="Write sports issue here..." required class="w-full p-2 bg-gray-900 rounded-lg text-sm text-white mb-2 outline-none"></textarea>
-                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 font-bold py-2 rounded-lg text-sm transition">Send to Khel Mantri</button>
-            </form>
-        </div>
+        /* Side Menu Drawer */
+        .drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: #161620; transition: 0.3s ease; z-index: 200; padding: 20px; box-shadow: 4px 0 15px rgba(0,0,0,0.5); overflow-y: auto; }
+        .drawer.active { left: 0; }
+        .close-btn { text-align: right; font-size: 20px; cursor: pointer; color: #ff5252; margin-bottom: 10px; }
+        .filter-section { background: #222230; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        .filter-section select { width: 100%; padding: 8px; background: #121218; color: #fff; border: 1px solid #444; border-radius: 6px; margin-top: 5px; }
+        .menu-item { padding: 12px 0; border-bottom: 1px solid #282836; cursor: pointer; font-size: 14px; }
+        .menu-item a { color: #fff; text-decoration: none; }
 
-        <!-- Shiksha Mantri Card -->
-        <div class="bg-gradient-to-r from-yellow-800 to-yellow-600 p-5 rounded-2xl shadow-xl animate__animated animate__fadeInUp border border-yellow-400">
-            <h3 class="text-xl font-bold flex items-center gap-2">🟡 Shiksha Mantri</h3>
-            <p class="text-xs text-yellow-100 my-2">Classroom, study material, ya education related problem report karein.</p>
-            <form action="/submit_complaint" method="POST" class="mt-3">
-                <input type="hidden" name="leader_role" value="Shiksha Mantri">
-                <textarea name="description" placeholder="Write education issue here..." required class="w-full p-2 bg-gray-900 rounded-lg text-sm text-white mb-2 outline-none"></textarea>
-                <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 rounded-lg text-sm transition">Send to Shiksha Mantri</button>
-            </form>
-        </div>
+        /* Container & Animations */
+        .container { padding: 20px; max-width: 600px; margin: 0 auto; }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
+        .animated-card {
+            animation: fadeInUp 0.6s ease-out forwards;
+            background: #1a1a24;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #292938;
+        }
+
+        .leader-card { cursor: pointer; transition: transform 0.2s; }
+        .leader-card:active { transform: scale(0.98); }
+        .leader-title { color: #bb86fc; font-weight: bold; font-size: 18px; margin-bottom: 5px; display: flex; align-items: center; }
+
+        /* Instagram Style Red Verified Badge */
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background-color: #e0245e;
+            clip-path: polygon(
+                50% 0%, 63% 5%, 75% 4%, 81% 15%, 93% 19%, 93% 31%,
+                100% 42%, 96% 54%, 98% 67%, 88% 75%, 85% 88%, 73% 90%,
+                63% 98%, 50% 93%, 37% 98%, 27% 90%, 15% 88%, 12% 75%,
+                2% 67%, 4% 54%, 0% 42%, 7% 31%, 7% 19%, 19% 15%,
+                25% 4%, 37% 5%
+            );
+            margin-left: 6px;
+        }
+        .verified-badge svg {
+            width: 10px;
+            height: 10px;
+            fill: #ffffff;
+        }
+
+        /* Modal Box for Complaint */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 300; justify-content: center; align-items: center; }
+        .modal-content { background: #1f1f2c; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; }
+        .modal-content textarea { width: 100%; height: 100px; background: #121218; border: 1px solid #333; color: #fff; border-radius: 8px; padding: 10px; margin-top: 10px; resize: none; }
+        .modal-btn { background: #bb86fc; color: #000; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+
+        /* Bottom Section */
+        .bottom-box { background: #161620; padding: 15px; border-radius: 12px; margin-top: 30px; text-align: center; }
+        .bottom-box textarea { width: 100%; background: #0f0f12; border: 1px solid #333; color: #fff; padding: 8px; border-radius: 6px; margin: 8px 0; }
+        .btn-sm { background: #03dac6; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation -->
+    <div class="navbar">
+        <span class="menu-btn" onclick="toggleDrawer()">☰</span>
+        <span class="logo">Sandepani Portal</span>
+        <img src="/static/uploads/{{ user['dp'] }}" class="user-dp-small" onerror="this.src='https://via.placeholder.com/35'">
     </div>
-    {% endif %}
 
-    <!-- Complaints History / Leader View -->
-    <h2 class="text-xl font-bold mb-4 text-green-400">Complaints Status</h2>
-    <div class="space-y-4">
-        {% for c in complaints %}
-        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center">
-            <div>
-                <span class="text-xs bg-gray-700 px-2 py-1 rounded text-blue-300 font-mono">To: {{ c[3] }}</span>
-                <p class="font-bold mt-1">{{ c[5] }}</p>
-                <p class="text-xs text-gray-400">By: {{ c[2] }} | Status: <span class="{% if c[7]=='Resolved' %}text-green-400{% else %}text-yellow-400{% endif %} font-bold">{{ c[7] }}</span></p>
-            </div>
-
-            <div>
-                {% if user.role != 'student' and c[7] != 'Resolved' %}
-                    <!-- 36 Hours (129600 seconds) Check -->
-                    {% if (current_time - c[6]) >= 129600 %}
-                        <a href="/resolve_complaint/{{ c[0] }}" class="bg-green-600 hover:bg-green-700 text-xs px-3 py-2 rounded font-bold">Mark Solved</a>
-                    {% else %}
-                        <button disabled class="bg-gray-600 text-xs px-3 py-2 rounded font-bold cursor-not-allowed opacity-50" title="Locked for 36 hours">Locked (36h)</button>
-                    {% endif %}
-                {% endif %}
-
-                {% if user.role == 'student' and c[7] != 'Resolved' %}
-                    <a href="/resolve_complaint/{{ c[0] }}" class="bg-green-600 hover:bg-green-700 text-xs px-3 py-2 rounded font-bold">I Solved This</a>
-                {% endif %}
-            </div>
+    <!-- Side Menu Drawer -->
+    <div class="drawer" id="sideDrawer">
+        <div class="close-btn" onclick="toggleDrawer()">✕ Close</div>
+        
+        <!-- Filter Selector -->
+        <div class="filter-section">
+            <label style="font-size: 12px; color: #aaa;">Filter Class/Section:</label>
+            <select>
+                <option>Class 10 - A</option>
+                <option>Class 10 - B</option>
+                <option>Class 9 - A</option>
+            </select>
         </div>
-        {% else %}
-        <p class="text-gray-500 text-sm">No complaints found.</p>
+
+        <div class="menu-item">📁 Complaint History</div>
+        <div class="menu-item">✅ Solved Problems</div>
+        <div class="menu-item">💬 Chat System</div>
+        <div class="menu-item">⚙️ Profile Settings (Change DP, Bio, Name)</div>
+        <div class="menu-item" style="margin-top: 20px;"><a href="/logout" style="color: #ff5252;">🚪 Logout</a></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+
+        <h3 style="margin-bottom: 15px; color: #aaa; text-align: center;">Official Cabinet Leaders</h3>
+
+        <!-- Leader Cards with Animation -->
+        {% for leader in leaders %}
+        <div class="animated-card leader-card" onclick="openComplaintModal('{{ leader.title }}')">
+            <div class="leader-title">
+                {{ leader.title }}
+                <span class="verified-badge" title="Verified Cabinet Leader">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                </span>
+            </div>
+            <p style="font-size: 14px; color: #ccc; margin-top: 5px;">{{ leader.desc }}</p>
+            <div style="margin-top: 10px; font-size: 12px; color: #bb86fc; text-align: right;">Tap to Send Complaint ✉️</div>
+        </div>
         {% endfor %}
+
+        <!-- Bottom Options: Feedback & Bugs -->
+        <div class="bottom-box animated-card">
+            <h4>Feedback & Bug Report</h4>
+            <p style="font-size: 12px; color: #aaa; margin-top: 4px;">Facing any technical issue or want to suggest something?</p>
+            <textarea id="bugText" placeholder="Write bug description or feedback here..."></textarea>
+            <button class="btn-sm" onclick="sendFeedback()">Submit Report</button>
+        </div>
+
     </div>
+
+    <!-- Complaint Modal Box -->
+    <div class="modal" id="complaintModal">
+        <div class="modal-content">
+            <h3 id="modalLeaderTitle" style="color: #bb86fc;">Write Complaint</h3>
+            <textarea id="complaintText" placeholder="Write your complaint clearly..."></textarea>
+            <button class="modal-btn" onclick="submitComplaint()">Send Complaint</button>
+            <button class="modal-btn" style="background: #333; color: #fff;" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        let currentLeader = '';
+
+        function toggleDrawer() {
+            document.getElementById('sideDrawer').classList.toggle('active');
+        }
+
+        function openComplaintModal(leaderTitle) {
+            currentLeader = leaderTitle;
+            document.getElementById('modalLeaderTitle').innerText = 'Complaint for ' + leaderTitle;
+            document.getElementById('complaintModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('complaintModal').style.display = 'none';
+        }
+
+        function submitComplaint() {
+            let text = document.getElementById('complaintText').value;
+            if(!text) return alert('Please write something first!');
+
+            fetch('/submit-complaint', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `leader=${encodeURIComponent(currentLeader)}&complaint=${encodeURIComponent(text)}`
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                closeModal();
+                document.getElementById('complaintText').value = '';
+            });
+        }
+
+        function sendFeedback() {
+            let text = document.getElementById('bugText').value;
+            if(!text) return alert('Write something first!');
+            alert('Feedback/Bug submitted to Admin!');
+            document.getElementById('bugText').value = '';
+        }
+    </script>
 </body>
 </html>
 

@@ -3,56 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Portal - Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <title>Login - Sandepani Portal</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 100%; max-width: 350px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        h2 { text-align: center; color: #bb86fc; margin-bottom: 20px; }
+        input { width: 100%; padding: 10px; margin: 8px 0; border-radius: 6px; border: 1px solid #333; background: #2c2c2c; color: #fff; box-sizing: border-box; }
+        .pass-box { position: relative; }
+        .eye-btn { position: absolute; right: 10px; top: 12px; cursor: pointer; user-select: none; }
+        .captcha-box { display: flex; align-items: center; justify-content: space-between; margin: 10px 0; }
+        .captcha-code { background: #bb86fc; color: #000; padding: 8px 15px; font-weight: bold; letter-spacing: 3px; border-radius: 6px; }
+        button { width: 100%; padding: 12px; border: none; background: #bb86fc; color: #000; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+        .link { text-align: center; margin-top: 15px; font-size: 14px; }
+        .link a { color: #bb86fc; text-decoration: none; }
+        .flash { color: #ff5252; text-align: center; font-size: 14px; margin-bottom: 10px; }
+    </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
-    <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl w-full max-w-md animate__animated animate__fadeInDown border border-gray-700">
-        <h2 class="text-2xl font-bold text-center text-blue-400 mb-6">🏫 School Student Portal</h2>
-        
-        <form action="/login" method="POST" class="space-y-4">
-            <div>
-                <label class="block text-sm text-gray-400 mb-1">Phone Number</label>
-                <input type="text" name="phone" required class="w-full p-3 bg-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+<body>
+    <div class="card">
+        <h2>Sandepani Login</h2>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for msg in messages %}<div class="flash">{{ msg }}</div>{% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form action="/login" method="POST">
+            <input type="text" name="identifier" placeholder="Username ya Phone Number" required>
+            <div class="pass-box">
+                <input type="password" name="password" id="loginPass" placeholder="Password" required>
+                <span class="eye-btn" onclick="togglePass('loginPass')">👁️</span>
             </div>
-            <div>
-                <label class="block text-sm text-gray-400 mb-1">Password</label>
-                <input type="password" name="password" required class="w-full p-3 bg-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="captcha-box">
+                <span class="captcha-code">{{ captcha }}</span>
+                <small style="color:#aaa;">Reload page for new</small>
             </div>
-            <div>
-                <label class="block text-sm text-gray-400 mb-1">Captcha: What is 2 + 2?</label>
-                <input type="text" name="captcha" placeholder="Enter answer" required class="w-full p-3 bg-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 font-bold py-3 rounded-lg transition transform active:scale-95">Login</button>
+            <input type="text" name="captcha" placeholder="Enter Captcha Code" required>
+            <button type="submit">Login</button>
         </form>
-
-        <hr class="my-6 border-gray-700">
-
-        <h3 class="text-lg font-bold text-center text-green-400 mb-4">Create New Account</h3>
-        <form action="/signup" method="POST" enctype="multipart/form-data" class="space-y-3">
-            <input type="text" name="name" placeholder="Full Name" required class="w-full p-2.5 bg-gray-700 rounded-lg outline-none">
-            <input type="text" name="class_sec" placeholder="Class & Section (e.g. 10th-A)" required class="w-full p-2.5 bg-gray-700 rounded-lg outline-none">
-            <input type="text" name="phone" placeholder="Phone Number" required class="w-full p-2.5 bg-gray-700 rounded-lg outline-none">
-            <input type="password" name="password" placeholder="Password" required class="w-full p-2.5 bg-gray-700 rounded-lg outline-none">
-            
-            <div>
-                <label class="block text-xs text-gray-400 mb-1">Select Role</label>
-                <select name="role" class="w-full p-2.5 bg-gray-700 rounded-lg outline-none text-white">
-                    <option value="student">Student</option>
-                    <option value="PM">Pradhan Mantri (Red Tick)</option>
-                    <option value="Khel Mantri">Khel Mantri (Blue Tick)</option>
-                    <option value="Shiksha Mantri">Shiksha Mantri (Blue Tick)</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-xs text-gray-400 mb-1">Upload Profile Picture * compulsory</label>
-                <input type="file" name="profile_pic" accept="image/*" required class="w-full text-xs text-gray-400">
-            </div>
-
-            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 font-bold py-2.5 rounded-lg transition transform active:scale-95">Sign Up</button>
-        </form>
+        <div class="link">
+            Don't have an account? <a href="/signup">Sign Up</a>
+        </div>
     </div>
+    <script>
+        function togglePass(id) {
+            let el = document.getElementById(id);
+            el.type = el.type === "password" ? "text" : "password";
+        }
+    </script>
 </body>
 </html>

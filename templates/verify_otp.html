@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 100%; max-width: 350px; text-align: center; }
+        input { width: 100%; padding: 10px; margin: 15px 0; border-radius: 6px; border: 1px solid #333; background: #2c2c2c; color: #fff; text-align: center; font-size: 18px; letter-spacing: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #03dac6; color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+        .flash { color: #03dac6; font-size: 14px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Enter OTP</h2>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for msg in messages %}<div class="flash">{{ msg }}</div>{% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form action="/verify-otp" method="POST">
+            <input type="text" name="otp" placeholder="6-Digit OTP" maxlength="6" required>
+            <button type="submit">Verify & Continue</button>
+        </form>
+    </div>
+</body>
+</html>

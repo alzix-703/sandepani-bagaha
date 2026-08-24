@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Setup</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; }
+        .card { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 100%; max-width: 380px; }
+        h2 { text-align: center; color: #bb86fc; }
+        input, select, textarea { width: 100%; padding: 10px; margin: 8px 0; border-radius: 6px; border: 1px solid #333; background: #2c2c2c; color: #fff; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #bb86fc; color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+        .flash { color: #ff5252; text-align: center; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Setup Your Profile</h2>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for msg in messages %}<div class="flash">{{ msg }}</div>{% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form action="/profile-setup" method="POST" enctype="multipart/form-data">
+            <input type="text" name="name" placeholder="Full Name" required>
+            <input type="text" name="username" placeholder="Unique Username" required>
+            <textarea name="address" placeholder="Address (Mandatory)" required></textarea>
+            <input type="text" name="bio" placeholder="Bio (Optional)">
+            <select name="gender" required>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+            <input type="text" name="class_name" placeholder="Class (e.g. 10th)" required>
+            <input type="text" name="section" placeholder="Section (e.g. A)" required>
+            <label style="font-size: 12px; color: #aaa;">Upload DP:</label>
+            <input type="file" name="dp" accept="image/*">
+            <button type="submit">Complete Setup</button>
+        </form>
+    </div>
+</body>
+</html>
