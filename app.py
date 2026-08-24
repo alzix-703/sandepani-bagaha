@@ -137,7 +137,7 @@ def signup():
         
         send_real_sms(phone, otp)
         
-        flash(f'Verification OTP successfully sent to your mobile number {phone}!')
+        flash('Verification OTP sent to your phone!')
         return redirect(url_for('verify_otp'))
         
     return render_template('signup.html')
@@ -152,7 +152,7 @@ def verify_otp():
             session['signup_success'] = True
             return redirect(url_for('profile_setup'))
         else:
-            flash('Galt OTP! Sahi OTP dalo jo aapke phone par aaya hai.')
+            flash('Galt OTP! Sahi OTP dalo.')
             
     return render_template('verify_otp.html')
 
