@@ -2,6 +2,7 @@ import os
 import sqlite3
 import random
 import string
+import requests
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from werkzeug.utils import secure_filename
 
@@ -12,6 +13,23 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 DISPOSABLE_EMAILS = ['bugmenot.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com', 'yopmail.com']
 
+# Aap yahan Fast2SMS se API key lekar dalna (Optional real SMS send karne ke liye)
+FAST2SMS_API_KEY = "1LgRSEw0MO9V4BGnopJrlF8j6mfcvA2hueYPqkIyWiZzXHNKTbP8qhR9CuSgr1s2Bt7MI4pecXzbmF0k"
+
+def send_real_sms(phone_number, otp_code):
+    """Real phone SMS send karne ke liye function"""
+    if FAST2SMS_API_KEY != "YOUR_FAST2SMS_API_KEY_HERE":
+        url = "https://www.fast2sms.com/dev/bulkV2"
+        payload = f"variables_values={otp_code}&route=otp&numbers={phone_number}"
+        headers = {
+            'authorization': FAST2SMS_API_KEY,
+            'Content-Type': "application/x-www-form-urlencoded"
+        }
+        try:
+            requests.post(url, data=payload, headers=headers)
+        except Exception as e:
+            print(f"SMS Error: {e}")
+
 def get_db_connection():
     conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
@@ -20,7 +38,6 @@ def get_db_connection():
 def init_db():
     conn = get_db_connection()
     c = conn.cursor()
-    # Users Table
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         phone TEXT UNIQUE,
@@ -37,7 +54,6 @@ def init_db():
         class_name TEXT,
         section TEXT
     )''')
-    # Complaints Table
     c.execute('''CREATE TABLE IF NOT EXISTS complaints (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
@@ -46,7 +62,6 @@ def init_db():
         status TEXT DEFAULT 'Pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
-    # Feedback & Tech Issues Table
     c.execute('''CREATE TABLE IF NOT EXISTS feedback (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
@@ -113,7 +128,11 @@ def signup():
             'password': password,
             'otp': otp
         }
-        flash(f'Verification Demo OTP: {otp}')
+        
+        # Real Phone SMS Call
+        send_real_sms(phone, otp)
+        
+        flash(f'Verification OTP sent to {phone}! (Demo OTP: {otp})')
         return redirect(url_for('verify_otp'))
         
     return render_template('signup.html')
@@ -149,7 +168,7 @@ def profile_setup():
         
         file = request.files.get('dp')
         dp_name = 'default.png'
-        if file:
+        if file and file.filename != '':
             dp_name = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], dp_name))
 
