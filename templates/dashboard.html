@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - School Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-4">
+    <!-- Top Navbar -->
+    <div class="flex justify-between items-center bg-gray-800 p-4 rounded-xl shadow-lg mb-6 border border-gray-700">
+        <div class="flex items-center gap-3">
+            <img src="/uploads/{{ user.pic }}" class="w-12 h-12 rounded-full border-2 border-blue-500 object-cover">
+            <div>
+                <h1 class="font-bold text-lg flex items-center gap-1">
+                    {{ user.name }}
+                    {% if user.badge == 'red_tick' %}
+                        <span class="text-red-500 text-sm">🔴 (PM)</span>
+                    {% elif user.badge == 'blue_tick' %}
+                        <span class="text-blue-400 text-sm">🔵 (Leader)</span>
+                    {% endif %}
+                </h1>
+                <p class="text-xs text-gray-400">Role: {{ user.role }}</p>
+            </div>
+        </div>
+        <a href="/logout" class="bg-red-600 hover:bg-red-700 text-xs px-4 py-2 rounded-lg font-bold">Logout</a>
+    </div>
+
+    <!-- Student Complaint Cards Section -->
+    {% if user.role == 'student' %}
+    <h2 class="text-xl font-bold mb-4 text-blue-400">Select Leader to File Complaint</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        
+        <!-- Pradhan Mantri Red Card -->
+        <div class="bg-gradient-to-r from-red-900 to-red-600 p-5 rounded-2xl shadow-xl animate__animated animate__pulse animate__infinite animate__slower border-2 border-red-500">
+            <h3 class="text-xl font-bold flex items-center gap-2">🔴 Pradhan Mantri <span class="bg-white text-red-600 text-xs px-2 py-0.5 rounded-full font-black">RED TICK</span></h3>
+            <p class="text-xs text-red-100 my-2">Agar aapki complaint koi leader nahi sun raha hai, toh yahan direct contact karein!</p>
+            <form action="/submit_complaint" method="POST" class="mt-3">
+                <input type="hidden" name="leader_role" value="PM">
+                <textarea name="description" placeholder="Write your complaint to PM here..." required class="w-full p-2 bg-gray-900 rounded-lg text-sm text-white mb-2 outline-none"></textarea>
+                <button type="submit" class="w-full bg-white text-red-700 font-bold py-2 rounded-lg text-sm hover:bg-gray-100 transition">Send to PM</button>
+            </form>
+        </div>
+
+        <!-- Khel Mantri Card -->
+        <div class="bg-gradient-to-r from-blue-900 to-blue-600 p-5 rounded-2xl shadow-xl animate__animated animate__fadeInUp border border-blue-400">
+            <h3 class="text-xl font-bold flex items-center gap-2">🔵 Khel Mantri</h3>
+            <p class="text-xs text-blue-100 my-2">Sports kit, playground, ya games relative problem yahan batayein.</p>
+            <form action="/submit_complaint" method="POST" class="mt-3">
+                <input type="hidden" name="leader_role" value="Khel Mantri">
+                <textarea name="description" placeholder="Write sports issue here..." required class="w-full p-2 bg-gray-900 rounded-lg text-sm text-white mb-2 outline-none"></textarea>
+                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 font-bold py-2 rounded-lg text-sm transition">Send to Khel Mantri</button>
+            </form>
+        </div>
+
+        <!-- Shiksha Mantri Card -->
+        <div class="bg-gradient-to-r from-yellow-800 to-yellow-600 p-5 rounded-2xl shadow-xl animate__animated animate__fadeInUp border border-yellow-400">
+            <h3 class="text-xl font-bold flex items-center gap-2">🟡 Shiksha Mantri</h3>
+            <p class="text-xs text-yellow-100 my-2">Classroom, study material, ya education related problem report karein.</p>
+            <form action="/submit_complaint" method="POST" class="mt-3">
+                <input type="hidden" name="leader_role" value="Shiksha Mantri">
+                <textarea name="description" placeholder="Write education issue here..." required class="w-full p-2 bg-gray-900 rounded-lg text-sm text-white mb-2 outline-none"></textarea>
+                <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 rounded-lg text-sm transition">Send to Shiksha Mantri</button>
+            </form>
+        </div>
+
+    </div>
+    {% endif %}
+
+    <!-- Complaints History / Leader View -->
+    <h2 class="text-xl font-bold mb-4 text-green-400">Complaints Status</h2>
+    <div class="space-y-4">
+        {% for c in complaints %}
+        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center">
+            <div>
+                <span class="text-xs bg-gray-700 px-2 py-1 rounded text-blue-300 font-mono">To: {{ c[3] }}</span>
+                <p class="font-bold mt-1">{{ c[5] }}</p>
+                <p class="text-xs text-gray-400">By: {{ c[2] }} | Status: <span class="{% if c[7]=='Resolved' %}text-green-400{% else %}text-yellow-400{% endif %} font-bold">{{ c[7] }}</span></p>
+            </div>
+
+            <div>
+                {% if user.role != 'student' and c[7] != 'Resolved' %}
+                    <!-- 36 Hours (129600 seconds) Check -->
+                    {% if (current_time - c[6]) >= 129600 %}
+                        <a href="/resolve_complaint/{{ c[0] }}" class="bg-green-600 hover:bg-green-700 text-xs px-3 py-2 rounded font-bold">Mark Solved</a>
+                    {% else %}
+                        <button disabled class="bg-gray-600 text-xs px-3 py-2 rounded font-bold cursor-not-allowed opacity-50" title="Locked for 36 hours">Locked (36h)</button>
+                    {% endif %}
+                {% endif %}
+
+                {% if user.role == 'student' and c[7] != 'Resolved' %}
+                    <a href="/resolve_complaint/{{ c[0] }}" class="bg-green-600 hover:bg-green-700 text-xs px-3 py-2 rounded font-bold">I Solved This</a>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-sm">No complaints found.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>
+
