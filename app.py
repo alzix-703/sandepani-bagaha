@@ -1,26 +1,44 @@
 import os
 import sqlite3
 import random
-import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = 'sandepani_secret_key_super_secure'
+app.secret_key = os.urandom(24)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 DISPOSABLE_EMAILS = ['bugmenot.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com', 'yopmail.com']
-FAST2SMS_API_KEY = "1LgRSEw0MO9V4BGnopJrlF8j6mfcvA2hueYPqkIyWiZzXHNKTbP8qhR9CuSgr1s2Bt7MI4pecXzbmF0k"
 
-def send_real_sms(phone_number, otp_code):
-    """Direct Fast2SMS GET API Call"""
+# Free Gmail SMTP Configuration (App Password)
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+SENDER_EMAIL = "your_email@gmail.com"       # Yahan apna Gmail daal sakte ho
+SENDER_PASSWORD = "your_app_password"         # Gmail App Password
+
+def send_email_otp(receiver_email, otp_code):
     try:
-        url = f"https://www.fast2sms.com/dev/bulkV2?authorization={FAST2SMS_API_KEY}&route=otp&variables_values={otp_code}&numbers={phone_number}"
-        res = requests.get(url)
-        print("SMS Response:", res.text)
+        msg = MIMEMultipart()
+        msg['From'] = SENDER_EMAIL
+        msg['To'] = receiver_email
+        msg['Subject'] = "Sandepani School Portal - Email Verification OTP"
+        
+        body = f"Hello,\n\nYour OTP for Sandepani Portal registration is: {otp_code}\n\nDo not share this code with anyone.\n\nRegards,\nSandepani School"
+        msg.attach(MIMEText(body, 'plain'))
+        
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        # Agar SMTP configured nahi hai to console me print ho jayega testing ke liye
+        if SENDER_EMAIL != "your_email@gmail.com":
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
+            server.sendmail(SENDER_EMAIL, receiver_email, msg.as_string())
+        server.quit()
     except Exception as e:
-        print(f"SMS Error: {e}")
+        print(f"Email Error: {e}")
 
 def get_db_connection():
     conn = sqlite3.connect('database.db')
@@ -54,12 +72,6 @@ def init_db():
         status TEXT DEFAULT 'Pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS feedback (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        type TEXT,
-        message TEXT
-    )''')
     conn.commit()
     conn.close()
 
@@ -80,7 +92,7 @@ def login():
     if request.method == 'POST':
         user_captcha = request.form.get('captcha')
         if user_captcha != session.get('captcha_text'):
-            flash('Galt Captcha Code! Phir se try karo.')
+            flash('Galt Captcha Code!')
             session['captcha_text'] = generate_captcha()
             return render_template('login.html', captcha=session['captcha_text'])
 
@@ -97,7 +109,7 @@ def login():
             session['username'] = user['username']
             return redirect(url_for('dashboard'))
         else:
-            flash('Galt Username/Phone ya Password!')
+            flash('Galt Username ya Password!')
             
     session['captcha_text'] = generate_captcha()
     return render_template('login.html', captcha=session['captcha_text'])
@@ -110,11 +122,11 @@ def signup():
         password = request.form.get('password')
         
         conn = get_db_connection()
-        existing_user = conn.execute('SELECT * FROM users WHERE phone = ?', (phone,)).fetchone()
+        existing_user = conn.execute('SELECT * FROM users WHERE phone = ? OR email = ?', (phone, email)).fetchone()
         conn.close()
         
         if existing_user:
-            flash('Ye mobile number pehle se registered hai! Please login your first account.')
+            flash('Ye Mobile number ya Email pehle se registered hai!')
             return render_template('signup.html')
             
         domain = email.split('@')[-1] if '@' in email else ''
@@ -123,6 +135,7 @@ def signup():
             return render_template('signup.html')
             
         otp = str(random.randint(100000, 999999))
+        session.clear()
         session['temp_user'] = {
             'phone': phone,
             'email': email,
@@ -130,9 +143,8 @@ def signup():
             'otp': otp
         }
         
-        send_real_sms(phone, otp)
-        
-        flash('Verification OTP sent to your registered mobile number!')
+        send_email_otp(email, otp)
+        flash(f'OTP Sent Successfully to {email} (For testing, check server logs if SMTP not set)')
         return redirect(url_for('verify_otp'))
         
     return render_template('signup.html')
@@ -143,11 +155,11 @@ def verify_otp():
         entered_otp = request.form.get('otp')
         temp_user = session.get('temp_user')
         
-        if temp_user and entered_otp == temp_user['otp']:
+        if temp_user and str(entered_otp).strip() == str(temp_user['otp']):
             session['signup_success'] = True
             return redirect(url_for('profile_setup'))
         else:
-            flash('Galt OTP! Mobile SMS me aaya sahi OTP enter karein.')
+            flash('Galt OTP! Dobara koshish karein.')
             
     return render_template('verify_otp.html')
 
@@ -183,13 +195,12 @@ def profile_setup():
                 (temp_user['phone'], temp_user['email'], temp_user['password'], name, username, address, bio, gender, dp_name, class_name, section))
             conn.commit()
             conn.close()
-            session.pop('temp_user', None)
-            session.pop('signup_success', None)
-            flash('Account successfully ban gaya! Ab Login karo.')
+            session.clear()
+            flash('Account ban gaya! Ab Login karein.')
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
             conn.close()
-            flash('Username pehle se taken hai, koi aur chunno.')
+            flash('Username pehle se taken hai!')
             
     return render_template('profile_setup.html')
 
@@ -204,10 +215,10 @@ def dashboard():
     conn.close()
     
     leaders = [
-        {"title": "Prime Minister (PM)", "name": "PM Post", "desc": "Overall school administration & main rules handle karte hain."},
-        {"title": "Shiksha Mantri", "name": "Education Leader", "desc": "Studies, syllabus aur school learning environment ke zimmedar."},
-        {"title": "Sports Mantri", "name": "Khel Mantri", "desc": "Sports events, games aur physical activities maintain karte hain."},
-        {"title": "Jal & Paryavaran Mantri", "name": "Environment Leader", "desc": "Cleanliness, water supply aur green campus ke head."}
+        {"title": "Prime Minister (PM)", "name": "PM Post", "desc": "Overall school administration."},
+        {"title": "Shiksha Mantri", "name": "Education Leader", "desc": "Studies & learning environment."},
+        {"title": "Sports Mantri", "name": "Khel Mantri", "desc": "Sports events & physical activities."},
+        {"title": "Jal & Paryavaran Mantri", "name": "Environment Leader", "desc": "Cleanliness & green campus."}
     ]
     
     return render_template('dashboard.html', user=user, leaders=leaders, all_users=all_users)
